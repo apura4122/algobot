@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 
 from algobot.helpers import get_data_from_parameter
+from algobot.helpers import get_data_from_parameter, final_up, final_down, sup
 
 
 def get_ddof_from_stdev(stdev_type: str) -> int:
@@ -421,3 +422,83 @@ def get_bandwidth(bollinger_bands: Tuple[float, float, float]) -> float:
     """
     lower_band, middle_band, upper_band = bollinger_bands
     return (upper_band - lower_band) / middle_band
+
+
+def get_atr(periods: int, data: List[Dict[str, float]]) -> float:
+    """
+    get atr
+    """
+    validate(periods, data)
+    running_sum = 0
+    for period in data[-periods:]:
+        high_low = period['high'] - period['open']
+        high_close = np.abs(period['High'] - period['Close'].shift())
+        low_close = np.abs(period['Low'] - period['Close'].shift())
+        running_sum += max(high_low, high_close, low_close)
+
+    return (running_sum / periods)
+
+
+def supertrend(data: List[Dict[str, float]], buy_mult: float, sell_mult: float, atr_buy: int, atr_sell: int) -> Tuple[
+    float, float, float]:
+    global final_up
+    global final_down
+    global sup
+
+    running_sum = 0
+    for x in range(int(atr_buy)):
+        high_low = data[-x - 1]['high'] - data[-x - 1]['open']
+        high_close = np.abs(data[-x - 1]['high'] - data[-x - 2]['close'])
+        low_close = np.abs(data[-x - 1]['low'] - data[-x - 1]['close'])
+        running_sum += max(high_low, high_close, low_close)
+
+    atrbuy = running_sum / atr_buy
+
+    running_sum = 0
+    for x in range(int(atr_sell)):
+        high_low = data[-x - 1]['high'] - data[-x - 1]['open']
+        high_close = np.abs(data[-x - 1]['high'] - data[-x - 2]['close'])
+        low_close = np.abs(data[-x - 1]['low'] - data[-x - 1]['close'])
+        running_sum += max(high_low, high_close, low_close)
+
+    atrsell = running_sum / atr_sell
+
+    Up = (data[-1]['high'] + data[-1]['low']) / 2 + buy_mult * atrbuy
+
+    Down = (data[-1]['high'] + data[-1]['low']) / 2 - sell_mult * atrsell
+
+    prev_final_up = final_up
+    prev_final_down = final_down
+    prv_sup = sup
+
+    if final_up == 0:
+        Up_2 = (data[-2]['high'] + data[-2]['low']) / 2 + buy_mult * atrbuy
+        final_up = Up_2
+    if final_down == 0:
+        Down_2 = (data[-2]['high'] + data[-2]['low']) / 2 - sell_mult * atrsell
+        final_down = Down_2
+
+    if (Up < final_up or data[-2]['close'] > final_up):
+        final_up = Up
+
+    if (Down > final_down or data[-2]['close'] < final_down):
+        final_down = Down
+
+    if (prv_sup == prev_final_up) and (data[-1]['close'] <= final_up):
+        sup = final_up
+    elif (prv_sup == prev_final_up) and (data[-1]['close'] > final_up):
+        sup = final_down
+    elif (prv_sup == prev_final_down) and (data[-1]['close'] >= final_down):
+        sup = final_down
+    elif (prv_sup == prev_final_down) and (data[-1]['close'] < final_down):
+        sup = final_up
+
+    print('Final up:', final_up, 'Final down:', final_down, 'Sup:', sup, 'Price:', data[-1]['close'])
+
+    if data[-1]['close'] >= sup:
+
+        return (1.0, sup, data[-1]['close'])
+
+    else:
+        return (2.0, sup, data[-1]['close'])
+

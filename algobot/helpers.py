@@ -45,7 +45,9 @@ SHORT_INTERVAL_MAP = {
 }
 
 LONG_INTERVAL_MAP = {v: k for k, v in SHORT_INTERVAL_MAP.items()}
-
+final_up = 0
+final_down = 0
+sup = 0
 
 def get_latest_version() -> str:
     """
