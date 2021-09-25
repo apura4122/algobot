@@ -493,7 +493,7 @@ def supertrend(data: List[Dict[str, float]], buy_mult: float, sell_mult: float, 
     elif (prv_sup == prev_final_down) and (data[-1]['close'] < final_down):
         sup = final_up
 
-    print('Final up:', final_up, 'Final down:', final_down, 'Sup:', sup, 'Price:', data[-1]['close'])
+    ##print('Final up:', final_up, 'Final down:', final_down, 'Sup:', sup, 'Price:', data[-1]['close'])
 
     if data[-1]['close'] >= sup:
 
