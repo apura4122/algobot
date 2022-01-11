@@ -5,11 +5,12 @@ Basic indicators. TODO: Deprecate and move to TA-LIB.
 import math
 from datetime import datetime
 from typing import Dict, List, Tuple, Union
-
+from stocktrends import indicators
 import numpy as np
 
 from algobot.helpers import get_data_from_parameter
 from algobot.helpers import get_data_from_parameter, final_up, final_down, sup
+
 
 
 def get_ddof_from_stdev(stdev_type: str) -> int:
@@ -445,6 +446,12 @@ def supertrend(data: List[Dict[str, float]], buy_mult: float, sell_mult: float, 
     global final_down
     global sup
 
+    renko = indicators.Renko(data)
+    renko.brick_size = 150
+    renko.chart_type = indicators.Renko.PERIOD_CLOSE
+    data = renko.get_ohlc_data()
+
+
     running_sum = 0
     for x in range(int(atr_buy)):
         high_low = data[-x - 1]['high'] - data[-x - 1]['open']
@@ -493,7 +500,7 @@ def supertrend(data: List[Dict[str, float]], buy_mult: float, sell_mult: float, 
     elif (prv_sup == prev_final_down) and (data[-1]['close'] < final_down):
         sup = final_up
 
-    ##print('Final up:', final_up, 'Final down:', final_down, 'Sup:', sup, 'Price:', data[-1]['close'])
+
 
     if data[-1]['close'] >= sup:
 

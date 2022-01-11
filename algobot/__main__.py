@@ -736,6 +736,7 @@ class Interface(QMainWindow):
         if self.configuration.graphIndicatorsCheckBox.isChecked():
             averageGraphDict['enable'] = True
             setup_graph_plots(self, interfaceDict['averageGraph'], trader, GraphType.AVG)
+            setup_graph_plots(self, interfaceDict['averageGraph'], self.backtester, GraphType.AVG)
         else:
             averageGraphDict['enable'] = False
 
