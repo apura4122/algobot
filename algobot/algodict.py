@@ -6,14 +6,14 @@ from algobot.enums import BACKTEST, LIVE, OPTIMIZER, SIMULATION
 
 
 # noinspection DuplicatedCode
-def get_interface_dictionary(parent, caller: int = None):
+def get_interface_dictionary(parent, caller: str = None):
     """
     Returns dictionary of objects from QT. Used for DRY principles.
     :param parent: Parent object from which to retrieve objects.
     :param caller: Caller that will determine which sub dictionary gets returned.
     :return: Dictionary of objects.
     """
-    interfaceDictionary = {
+    interface_dictionary = {
         SIMULATION: {
             'mainInterface': {
                 # Portfolio
@@ -130,5 +130,5 @@ def get_interface_dictionary(parent, caller: int = None):
         }
     }
     if caller is not None:
-        return interfaceDictionary[caller]
-    return interfaceDictionary
+        return interface_dictionary[caller]
+    return interface_dictionary
