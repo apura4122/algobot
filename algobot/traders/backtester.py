@@ -23,6 +23,7 @@ from algobot.interface.config_utils.strategy_utils import get_strategies_diction
 from algobot.strategies.strategy import Strategy
 from algobot.traders.trader import Trader
 from algobot.typing_hints import DATA_TYPE, DICT_TYPE
+from algobot.algorithms import convert_renko, get_atr
 
 
 class Backtester(Trader):
@@ -74,6 +75,12 @@ class Backtester(Trader):
         self.setup_strategies(strategies)
         self.startDateIndex = self.get_start_index(startDate)
         self.endDateIndex = self.get_end_index(endDate)
+
+        df = pd.DataFrame(self.data)
+        # print(df)
+        df['date'] = df['date_utc']
+        self.renko = convert_renko(df, get_atr(15, self.data))
+        self.final_data = self.renko.to_dict('records')
 
     def change_strategy_interval(self, interval: str):
         """
@@ -222,6 +229,7 @@ class Backtester(Trader):
         """
         for strategy in self.strategies.values():
             try:
+
                 strategy.get_trend(strategyData)
             except Exception as e:
                 if thread and thread.caller == OPTIMIZER:
@@ -301,10 +309,18 @@ class Backtester(Trader):
         :param testLength: Length of backtest.
         :param thread: Optional thread that called this function that'll be used for emitting signals.
         """
-        seen_data = self.data[:self.startDateIndex]
+        seen_data = self.final_data[:self.startDateIndex]
         strategy_data = seen_data if self.strategyIntervalMinutes == self.intervalMinutes else []
         next_insertion = self.data[self.startDateIndex]['date_utc'] + timedelta(minutes=self.strategyIntervalMinutes)
         index = None
+        # df = pd.DataFrame(strategy_data)
+        # # print(df)
+        # df['date'] = df['date_utc']
+        #
+        # strategy_data = convert_renko(df, get_atr(15, strategy_data))
+        # strategy_data = strategy_data.to_dict('records')
+        # ------------------------------------------------------
+
         for index in range(self.startDateIndex, self.endDateIndex + 1):
             if thread and not thread.running:
                 if thread.caller == BACKTEST:

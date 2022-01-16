@@ -2,10 +2,15 @@ from typing import List, Union
 import time
 import logging
 from algobot.data import Data
+import numpy as np
+import  pandas as pd
+import cProfile
+import pstats
+
 from algobot.enums import BEARISH, BULLISH
 # from algobot.Superoption import Option
 from algobot.traders.backtester import Backtester
-from algobot.algorithms import get_ema, get_sma, get_wma, supertrend
+from algobot.algorithms import get_ema, get_sma, get_wma, supertrend, convert_renko, get_atr
 
 from algobot.strategies.strategy import Strategy
 from PyQt5.QtWidgets import (QApplication, QCompleter, QFileDialog,
@@ -15,7 +20,7 @@ from PyQt5.QtWidgets import (QApplication, QCompleter, QFileDialog,
 
 
 class Supertrend(Strategy):
-    def __init__(self, parent=None, inputs: list = (None,) * 5, precision: int = 2):
+    def __init__(self, parent=None, inputs: list = (None,) * 6, precision: int = 2):
         """
         Basic Moving Average strategy.
         """
@@ -25,6 +30,7 @@ class Supertrend(Strategy):
         self.Parameter: str = inputs[2]
         self.ATR_buy_period: int = inputs[3]
         self.ATR_sell_period: int = inputs[4]
+        self.ATR_period: int = inputs[5]
         self.dynamic = True
         self.description = "Supertrend strategy"
         self.loggern = logging.getLogger()
@@ -43,7 +49,8 @@ class Supertrend(Strategy):
             'Sell Multiplier': self.Sell_multiplier,
             'Parameter': self.Parameter,
             'ATR buy period': self.ATR_buy_period,
-            'ATR sell period': self.ATR_sell_period
+            'ATR sell period': self.ATR_sell_period,
+            'ATR period': self.ATR_period
 
         }
 
@@ -61,6 +68,7 @@ class Supertrend(Strategy):
         self.Parameter = inputs[2]
         self.ATR_buy_period = inputs[3]
         self.ATR_sell_period = inputs[4]
+        self.ATR_period = inputs[5]
 
     def get_min_option_period(self) -> int:
         """
@@ -88,7 +96,8 @@ class Supertrend(Strategy):
                 ('Sell_multiplier', float),
                 ('Parameter', tuple, parameters),
                 ('ATR_buy_period', int),
-                ('ATR_sell_period', int)
+                ('ATR_sell_period', int),
+                ('ATR_period', int)
                 ]
 
     def get_params(self) -> list:
@@ -100,7 +109,8 @@ class Supertrend(Strategy):
             self.Sell_multiplier,
             self.Parameter,
             self.ATR_buy_period,
-            self.ATR_sell_period
+            self.ATR_sell_period,
+            self.ATR_period
         ]
 
     def get_trend(self, data: Union[List[dict], Data] = None, log_data: bool = True) -> int:
@@ -108,11 +118,16 @@ class Supertrend(Strategy):
         This function should return the current trend for the Moving Average strategy with the provided data.
         :param data: Data container to get trend from - it can either be a list or a Data object.
         :param log_data: Boolean specifying whether current information regarding strategy should be logged or not.
+
         """
+        # print('----------------------------------------------------------')
+        # profile = cProfile.Profile()
+        # profile.enable()
         parent = self.parent
         trends = []  # Current option trends. They all have to be the same to register a trend.
 
         data_obj = data
+
 
         if isinstance(data, Data):
             # Get a copy of the data + the current values. Note we create a copy because we don't want to mutate the
@@ -120,9 +135,28 @@ class Supertrend(Strategy):
             # operation.
             data = data.data + [data.current_values]
 
+
+
         if type(data) == list:  # This means it was called by the optimizer/backtester.
+
+            #convert list to pandas dataframe and then back to list
+            # atr = get_atr(self.ATR_period, data)
+
+            # print('--------------------------------------------------------------------------------------')
+            # df = pd.DataFrame(data)
+            # # print(df)
+            # df['date'] = df['date_utc']
+            #
+            # dated = convert_renko(df,atr)
+            # print(data)
+            # print('--------------------------------------------------------------------------------------')
+            # print(dated)
+            # dated = dated.to_dict('records')
             avg1 = supertrend(data, self.Buy_multiplier,self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
         else:  # This means it was called by the live bot / simulation.
+            table = data.create_table()
+            atr = get_atr(self.ATR_period, data)
+            dated = convert_renko(table, atr)
             avg1 = parent.get_super( self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period, data)
 
         prefix, interval = self.get_prefix_and_interval_type(data_obj)
@@ -172,6 +206,11 @@ class Supertrend(Strategy):
             self.trend = BEARISH
         else:
             self.trend = None
+
+        # profile.disable()
+        # ps = pstats.Stats(profile)
+        # ps.print_stats()
+        # print('----------------------------------------------------------')
 
         return self.trend
 

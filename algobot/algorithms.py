@@ -8,6 +8,9 @@ from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
+import stocktrends
+from stocktrends import indicators
+
 from algobot.helpers import get_data_from_parameter
 from algobot.helpers import get_data_from_parameter, final_up, final_down, sup
 
@@ -423,6 +426,14 @@ def get_bandwidth(bollinger_bands: Tuple[float, float, float]) -> float:
     lower_band, middle_band, upper_band = bollinger_bands
     return (upper_band - lower_band) / middle_band
 
+def convert_renko( data: List[Dict[str, float]], brick_size: float) -> List[Dict[str, float]]:
+
+    renko = indicators.Renko(data)
+    renko.brick_size = brick_size
+    dated = renko.get_ohlc_data()
+    return dated
+
+
 
 def get_atr(periods: int, data: List[Dict[str, float]]) -> float:
     """
@@ -430,10 +441,10 @@ def get_atr(periods: int, data: List[Dict[str, float]]) -> float:
     """
     validate(periods, data)
     running_sum = 0
-    for period in data[-periods:]:
-        high_low = period['high'] - period['open']
-        high_close = np.abs(period['High'] - period['Close'].shift())
-        low_close = np.abs(period['Low'] - period['Close'].shift())
+    for x in range(periods):
+        high_low = data[-x - 1]['high'] - data[-x - 1]['open']
+        high_close = np.abs(data[-x - 1]['high'] - data[-x - 2]['close'])
+        low_close = np.abs(data[-x - 1]['low'] - data[-x - 1]['close'])
         running_sum += max(high_low, high_close, low_close)
 
     return (running_sum / periods)
