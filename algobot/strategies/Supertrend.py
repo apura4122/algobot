@@ -154,9 +154,10 @@ class Supertrend(Strategy):
             # dated = dated.to_dict('records')
             avg1 = supertrend(data, self.Buy_multiplier,self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
         else:  # This means it was called by the live bot / simulation.
-            table = data.create_table()
-            atr = get_atr(self.ATR_period, data)
-            dated = convert_renko(table, atr)
+            # table = data.create_table()
+            # atr = get_atr(self.ATR_period, data)
+            # dated = convert_renko(table, atr)
+            # print(data)
             avg1 = parent.get_super( self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period, data)
 
         prefix, interval = self.get_prefix_and_interval_type(data_obj)
@@ -224,3 +225,13 @@ class Supertrend(Strategy):
         for Superoption in self.tradingOptions:
             if type(Superoption) != Option:
                 raise TypeError(f"'{option}' is not a valid option type.")
+
+    # def initialize_plot_dict(self):
+    #     """
+    #     Initializes plot dictionary for the Moving Average class.
+    #     """
+    #     # TODO: Add support for colors in the actual program.
+    #     for option in self.tradingOptions:
+    #         initialName, finalName = option.get_pretty_option()
+    #         self.plotDict[initialName] = [self.get_current_trader_price(), get_random_color()]
+    #         self.plotDict[finalName] = [self.get_current_trader_price(), get_random_color()]

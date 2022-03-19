@@ -381,12 +381,13 @@ def update_main_graphs(gui: Interface, caller: int, valueDict: dict):
     average_graph_dict = get_graph_dictionary(gui, average_graph)
     if average_graph_dict['enable']:
         average_graph.setLimits(xMin=0, xMax=graph_x_size)
-        add_data_to_plot(gui, average_graph, 0, y=round(valueDict['price'], precision), timestamp=current_utc)
+        # add_data_to_plot(gui, average_graph, 0, y=round(valueDict['price'], precision), timestamp=current_utc)
 
         trader = gui.get_trader(caller=caller)
         for strategy in trader.strategies.values():
             strategy_plot_dict = strategy.get_plot_data()
-            index = strategy_plot_dict['index']
+            print(strategy_plot_dict)
+            index =0
             for name, combined_data in strategy_plot_dict.items():
 
                 if name == 'index':

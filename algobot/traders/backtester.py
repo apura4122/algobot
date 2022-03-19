@@ -11,7 +11,15 @@ from datetime import datetime, timedelta
 from itertools import product
 from logging import Logger
 from typing import Dict, Union
-
+from numpy.random import rand
+from numpy.random import choice
+from numpy import asarray
+from numpy import clip
+from numpy import argmin
+import random
+import numpy as np
+from numpy import min
+from numpy import around
 import pandas as pd
 from dateutil import parser
 
@@ -79,8 +87,14 @@ class Backtester(Trader):
         df = pd.DataFrame(self.data)
         # print(df)
         df['date'] = df['date_utc']
-        self.renko = convert_renko(df, get_atr(15, self.data))
+        self.renko = convert_renko(df, get_atr(100, self.data))
         self.final_data = self.renko.to_dict('records')
+        self.pop_size = 200
+        self.Best_option = []
+        self.iter = 100
+        self.F = 1
+        self.bounds = 0
+        self.k = 1
 
     def change_strategy_interval(self, interval: str):
         """
@@ -399,6 +413,12 @@ class Backtester(Trader):
         :param combos: Combos with ranges for the permutations.
         :return: List of all permutations.
         """
+
+        self.bounds = list(combos.get('strategies',{}).get('Supertrend',{}).values())
+        self.bounds = [x[:-1] for x in self.bounds]
+        print(self.bounds)
+
+        # print(combos.items())
         for key, value_range in combos.items():  # This will handle steps -> (5, 10, 1) start = 5, end = 10, step = 1
             if isinstance(value_range, tuple) and len(value_range) == 3:
                 self.extend_helper(value_range, combos, key)
@@ -425,6 +445,40 @@ class Backtester(Trader):
                 permutations.append(copy.deepcopy(permutations_dict))
         return permutations
 
+    def mutation(self,a,b,c,F):
+        j= a
+        j['strategies']['Supertrend']['Buy_multiplier'] = j['strategies']['Supertrend']['Buy_multiplier'] + F*(b['strategies']['Supertrend']['Buy_multiplier'] - c['strategies']['Supertrend']['Buy_multiplier'] )
+        j['strategies']['Supertrend']['Sell_multiplier'] = j['strategies']['Supertrend']['Sell_multiplier'] + F * (
+                    b['strategies']['Supertrend']['Sell_multiplier'] - c['strategies']['Supertrend'][
+                'Sell_multiplier'])
+        j['strategies']['Supertrend']['ATR_buy_period'] = j['strategies']['Supertrend']['ATR_buy_period'] + F * (
+                    b['strategies']['Supertrend']['ATR_buy_period'] - c['strategies']['Supertrend'][
+                'ATR_buy_period'])
+        j['strategies']['Supertrend']['ATR_sell_period'] = j['strategies']['Supertrend']['ATR_sell_period'] + F * (
+                    b['strategies']['Supertrend']['ATR_sell_period'] - c['strategies']['Supertrend'][
+                'ATR_sell_period'])
+
+        return j
+
+    def check_bounds(self, mutated, bounds):
+        j=mutated
+        for index, key in enumerate(j['strategies']['Supertrend']):
+            if key != 'Parameter':
+                j['strategies']['Supertrend'][key] = (abs(j['strategies']['Supertrend'][key]))%(bounds[index][1])+1
+        return j
+
+    def crossover(self,mutated, target, dims, cr):
+        # generate a uniform random value for every dimension
+        p = rand(dims)
+        # generate trial vector by binomial crossover
+        d = mutated
+        for index, key in enumerate(d['strategies']['Supertrend']):
+
+            if key != 'Parameter':
+                if p[index] > cr:
+                    d['strategies']['Supertrend'][key] = target['strategies']['Supertrend'][key]
+        return d
+
     def optimize(self, combos: Dict, thread=None):
         """
         This function will run a brute-force optimization test to figure out the best inputs.
@@ -433,28 +487,163 @@ class Backtester(Trader):
             'lossPercentage': (5, 15, 3) -> use a tuple with 3 values for steps i.e. -> 5, 8, 11, 14.
         }
         """
+
+
+        print('Optimize command entered')
         settings_list = self.get_all_permutations(combos)
+        # print(settings_list.get('strategies', {}).get('Supertrend',{}))
+        # print('mmmmmm')
+        pop = random.sample(settings_list, self.pop_size)
+
         was_thread = thread is not None
         if thread:
             thread.signals.started.emit()
 
-        for index, settings in enumerate(settings_list, start=1):
+
+
+        for index, settings in enumerate(pop, start=1):
             if thread and not thread.running:
+                print(1)
                 break
+
             if was_thread and not thread:
+                print(2)
                 break  # Bug fix for optimizer keeping on running even after it was stopped.
 
             self.apply_general_settings(settings)
             if not self.has_moving_average_redundancy():
+
                 result = self.start_backtest(thread)
             else:
                 self.currentPrice = 0  # Or else it'll crash.
                 result = 'SKIPPED'
 
             if thread:
-                thread.signals.activity.emit(self.get_basic_optimize_info(index, len(settings_list), result=result))
+                row = self.get_basic_optimize_info(index, len(pop), result=result)
+
+                if self.k:
+                    self.Best_option = row
+                    self.k=0
+
+                if row[0] > self.Best_option[0]:
+                    self.Best_option = row
+
+                thread.signals.activity.emit(self.Best_option)
 
             self.restore()
+
+        for i in range(self.iter):
+            # iterate over all candidate solutions
+            for j in range(self.pop_size):
+                # choose three candidates, a, b and c, that are not the current one
+                candidates = [candidate for candidate in range(self.pop_size) if candidate != j]
+                l = choice(candidates, 3, replace=False)
+                a = pop[l[0]]
+                b = pop[l[1]]
+                c = pop[l[2]]
+                # perform mutation
+
+                mutated = self.mutation(a,b,c,1)
+
+                print("mutation:")
+                print(mutated)
+
+                # check that lower and upper bounds are retained after mutation
+                mutated = self.check_bounds(mutated, self.bounds)
+                print("checkbound:")
+                print(mutated)
+                # perform crossover
+
+                cr = 0.7
+                trial = self.crossover(mutated, pop[j], len(self.bounds), cr)
+                print( "Trial:" )
+                print(trial)
+                # compute objective function value for target vector
+                if thread and not thread.running:
+                    print(1)
+                    break
+
+                if was_thread and not thread:
+                    print(2)
+                    break  # Bug fix for optimizer keeping on running even after it was stopped.
+
+                self.apply_general_settings(pop[j])
+
+                if not self.has_moving_average_redundancy():
+
+                    result = self.start_backtest(thread)
+                else:
+                    self.currentPrice = 0  # Or else it'll crash.
+                    result = 'SKIPPED'
+
+                if thread:
+                    row = self.get_basic_optimize_info(len(pop)+j + 1+i*self.pop_size*2, len(pop) + 3*self.pop_size*self.iter, result=result)
+
+                obj_target = row
+
+                self.restore()
+
+                # compute objective function value for trial vector
+                self.apply_general_settings(trial)
+
+                if not self.has_moving_average_redundancy():
+
+                    result = self.start_backtest(thread)
+                else:
+                    self.currentPrice = 0  # Or else it'll crash.
+                    result = 'SKIPPED'
+
+                if thread:
+                    row = self.get_basic_optimize_info(len(pop) + j+2 + i * self.pop_size * 2,
+                                                       len(pop) + 3 * self.pop_size * self.iter, result=result)
+
+
+                obj_trial = row
+
+                # perform selection
+                if obj_trial[0] > obj_target[0]:
+                    # replace the target vector with the trial vector
+                    pop[j] = trial
+
+                    if obj_trial[0] > self.Best_option[0]:
+                        self.Best_option = obj_trial
+                else:
+                    if obj_target[0] > self.Best_option[0]:
+                        self.Best_option = obj_target
+
+                thread.signals.activity.emit(self.Best_option)
+                self.restore()
+
+
+            # for index, settings in enumerate(pop, start=1):
+            #     if thread and not thread.running:
+            #         print(1)
+            #         break
+            #
+            #     if was_thread and not thread:
+            #         print(2)
+            #         break  # Bug fix for optimizer keeping on running even after it was stopped.
+            #
+            #     self.apply_general_settings(settings)
+            #     if not self.has_moving_average_redundancy():
+            #
+            #         result = self.start_backtest(thread)
+            #     else:
+            #         self.currentPrice = 0  # Or else it'll crash.
+            #         result = 'SKIPPED'
+            #     print(index + i * self.pop_size + i*len(pop))
+            #
+            #     if thread:
+            #         row = self.get_basic_optimize_info(index+i*self.pop_size + i*len(pop),len(pop) + 3*len(pop)*self.iter, result=result)
+            #
+            #         if row[0] > self.Best_option[0]:
+            #             self.Best_option = row
+            #
+            #         # store the new objective function value
+            #
+            #         thread.signals.activity.emit(self.Best_option)
+            #     self.restore()
+
 
     def has_moving_average_redundancy(self):
         """

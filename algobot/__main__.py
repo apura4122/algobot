@@ -317,6 +317,7 @@ class Interface(QMainWindow):
             return
 
         combos = self.configuration.get_optimizer_settings()
+
         if combos['strategies'] == {}:
             create_popup(self, "No strategies found. Make sure you have some strategies for optimization.")
             return

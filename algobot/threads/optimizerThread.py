@@ -48,6 +48,7 @@ class OptimizerThread(QRunnable):
         Setup and instantiate object to run the optimization.
         """
         self.gui.optimizer = Backtester(**self.get_configuration_details())
+        print('Optimizer setup entered')
 
     def stop(self):
         """
@@ -62,6 +63,7 @@ class OptimizerThread(QRunnable):
         optimizer = self.gui.optimizer
         optimizer.optimize(combos=self.combos, thread=self)
         self.running = False
+        print('Run optimizer function entered')
         self.signals.finished.emit()
 
     @pyqtSlot()
@@ -72,6 +74,7 @@ class OptimizerThread(QRunnable):
         try:
             self.setup()
             self.run_optimizer()
+            print('Optimizer tried')
         except Exception as e:
             self.logger.exception(repr(e))
             self.signals.error.emit(str(e))

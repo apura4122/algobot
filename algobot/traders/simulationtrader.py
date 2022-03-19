@@ -6,11 +6,13 @@ import time
 from datetime import datetime
 from threading import Lock
 from typing import Union
+import pandas as pd
 
 from algobot.data import Data
 from algobot.enums import BEARISH, BULLISH, ENTER_LONG, ENTER_SHORT, EXIT_LONG, EXIT_SHORT, LONG, SHORT
 from algobot.helpers import convert_small_interval, get_logger
 from algobot.traders.trader import Trader
+from algobot.algorithms import convert_renko, get_atr
 
 
 class SimulationTrader(Trader):
@@ -50,6 +52,14 @@ class SimulationTrader(Trader):
         self.lock = Lock()  # Lock to ensure a transaction doesn't occur when another one is taking place.
         self.addTradeCallback = addTradeCallback  # Callback for GUI to add trades.
         self.dailyChangeNets = []  # Daily change net list. Will contain list of all nets.
+        # print(self.dataView)
+        df = pd.DataFrame(self.dataView.data)
+        # print(df)
+        df['date'] = df['date_utc']
+        self.renko = convert_renko(df, get_atr(100, self.dataView.data))
+        self.final_data = self.renko.to_dict('records')
+        self.og = self.dataView
+        self.og.data = self.final_data
 
     def output_message(self, message: str, level: int = 2, printMessage: bool = False):
         """
@@ -345,7 +355,7 @@ class SimulationTrader(Trader):
         :return: Integer in the form of an enum.
         """
         if not dataObject:  # We usually only pass the dataObject for a lower interval.
-            dataObject = self.dataView
+            dataObject = self.og
 
         trends = [strategy.get_trend(data=dataObject, log_data=log_data) for strategy in self.strategies.values()]
         return self.get_cumulative_trend(trends=trends)
