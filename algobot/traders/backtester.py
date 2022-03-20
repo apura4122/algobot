@@ -517,6 +517,7 @@ class Backtester(Trader):
             else:
                 self.currentPrice = 0  # Or else it'll crash.
                 result = 'SKIPPED'
+            print(index)
 
             if thread:
                 row = self.get_basic_optimize_info(index, len(pop), result=result)
@@ -527,8 +528,9 @@ class Backtester(Trader):
 
                 if row[0] > self.Best_option[0]:
                     self.Best_option = row
+                    thread.signals.activity.emit(self.Best_option)
 
-                thread.signals.activity.emit(self.Best_option)
+
 
             self.restore()
 
@@ -545,19 +547,14 @@ class Backtester(Trader):
 
                 mutated = self.mutation(a,b,c,1)
 
-                print("mutation:")
-                print(mutated)
-
                 # check that lower and upper bounds are retained after mutation
                 mutated = self.check_bounds(mutated, self.bounds)
-                print("checkbound:")
-                print(mutated)
+
                 # perform crossover
 
                 cr = 0.7
                 trial = self.crossover(mutated, pop[j], len(self.bounds), cr)
-                print( "Trial:" )
-                print(trial)
+
                 # compute objective function value for target vector
                 if thread and not thread.running:
                     print(1)
@@ -577,7 +574,7 @@ class Backtester(Trader):
                     result = 'SKIPPED'
 
                 if thread:
-                    row = self.get_basic_optimize_info(len(pop)+j + 1+i*self.pop_size*2, len(pop) + 3*self.pop_size*self.iter, result=result)
+                    row = self.get_basic_optimize_info(len(pop)+j + 1+i*self.pop_size*2, len(pop) + 2*self.pop_size*self.iter, result=result)
 
                 obj_target = row
 
@@ -595,10 +592,12 @@ class Backtester(Trader):
 
                 if thread:
                     row = self.get_basic_optimize_info(len(pop) + j+2 + i * self.pop_size * 2,
-                                                       len(pop) + 3 * self.pop_size * self.iter, result=result)
+                                                       len(pop) + 2* self.pop_size * self.iter, result=result)
 
 
                 obj_trial = row
+                print((len(pop) + j+2 + i * self.pop_size * 2)*100/(len(pop) + 2* self.pop_size * self.iter))
+
 
                 # perform selection
                 if obj_trial[0] > obj_target[0]:
@@ -607,11 +606,13 @@ class Backtester(Trader):
 
                     if obj_trial[0] > self.Best_option[0]:
                         self.Best_option = obj_trial
+                        thread.signals.activity.emit(self.Best_option)
                 else:
                     if obj_target[0] > self.Best_option[0]:
                         self.Best_option = obj_target
+                        thread.signals.activity.emit(self.Best_option)
 
-                thread.signals.activity.emit(self.Best_option)
+
                 self.restore()
 
 

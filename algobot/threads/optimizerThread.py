@@ -61,9 +61,9 @@ class OptimizerThread(QRunnable):
         Execute the optimizer thread.
         """
         optimizer = self.gui.optimizer
+        print('Run optimizer function entered')
         optimizer.optimize(combos=self.combos, thread=self)
         self.running = False
-        print('Run optimizer function entered')
         self.signals.finished.emit()
 
     @pyqtSlot()
@@ -73,8 +73,9 @@ class OptimizerThread(QRunnable):
         """
         try:
             self.setup()
-            self.run_optimizer()
             print('Optimizer tried')
+            self.run_optimizer()
+
         except Exception as e:
             self.logger.exception(repr(e))
             self.signals.error.emit(str(e))
