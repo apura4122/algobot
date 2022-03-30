@@ -207,6 +207,7 @@ class Data:
             with closing(connection.cursor()) as cursor:
                 for data in total_data:
                     try:
+                        print(data)
                         cursor.execute(query,
                                        (data['date_utc'].strftime('%Y-%m-%d %H:%M:%S'),
                                         data['open'],

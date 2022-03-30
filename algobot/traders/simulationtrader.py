@@ -52,9 +52,10 @@ class SimulationTrader(Trader):
         self.lock = Lock()  # Lock to ensure a transaction doesn't occur when another one is taking place.
         self.addTradeCallback = addTradeCallback  # Callback for GUI to add trades.
         self.dailyChangeNets = []  # Daily change net list. Will contain list of all nets.
-        # print(self.dataView)
+        print(self.dataView)
+        print("--------------------------------")
         df = pd.DataFrame(self.dataView.data)
-        # print(df)
+        print(df)
         df['date'] = df['date_utc']
         self.renko = convert_renko(df, get_atr(100, self.dataView.data))
         self.final_data = self.renko.to_dict('records')
