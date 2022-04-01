@@ -237,21 +237,22 @@ def setup_average_graph_plots(gui: Interface, graph: PlotWidget, trader, colors:
     current_price = trader.currentPrice
     current_date_timestamp = datetime.utcnow().timestamp()
 
-    ticker_plot_dict = get_plot_dictionary(gui=gui,
-                                           graph=graph,
-                                           color=colors[0],
-                                           y=current_price,
-                                           name=trader.symbol,
-                                           timestamp=current_date_timestamp)
-    append_plot_to_graph(gui, graph, [ticker_plot_dict])
+    # ticker_plot_dict = get_plot_dictionary(gui=gui,
+    #                                        graph=graph,
+    #                                        color=colors[0],
+    #                                        y=current_price,
+    #                                        name=trader.symbol,
+    #                                        timestamp=current_date_timestamp)
+    # append_plot_to_graph(gui, graph, [ticker_plot_dict])
 
     # Every graph plot needs to have an index. We'll start from 1. (since 0 is for the price). Logically, we only need
     # the first index for each strategy dictionary, since we can iterate through it and add to it.
-    index = 1
+    index = 0
 
     for strategy in trader.strategies.values():
         strategy_plot_dict = strategy.get_plot_data()
         strategy_plot_dict['index'] = index
+
         for name, combined_data in strategy_plot_dict.items():
 
             if name == 'index':
@@ -264,8 +265,12 @@ def setup_average_graph_plots(gui: Interface, graph: PlotWidget, trader, colors:
                                             y=value,
                                             name=name,
                                             timestamp=current_date_timestamp)
+
             append_plot_to_graph(gui, graph, [plot_dict])
             index += 1
+            print(index)
+            print([plot_dict])
+            print(name)
 
 
 def append_plot_to_graph(gui: Interface, targetGraph: PlotWidget, toAdd: list):

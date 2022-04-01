@@ -9,6 +9,7 @@ from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from logging import Logger
 from typing import Dict, List, Tuple, Union
+from algobot.algorithms import convert_renko, get_atr
 
 import binance
 import pandas as pd
@@ -82,10 +83,15 @@ class Data:
         self.database_table = f'data_{self.interval}'
         self.database_file = self.get_database_file()
         self.create_table()
+        self.atr = 90
 
         if load_data:
             # Create, initialize, store, and get values from database.
             self.load_data(update=update, limit_fetch=limit_fetch)
+
+
+
+
 
     def get_interval_unit_and_measurement(self) -> Tuple[str, int]:
         """
@@ -207,7 +213,7 @@ class Data:
             with closing(connection.cursor()) as cursor:
                 for data in total_data:
                     try:
-                        print(data)
+
                         cursor.execute(query,
                                        (data['date_utc'].strftime('%Y-%m-%d %H:%M:%S'),
                                         data['open'],
@@ -305,6 +311,9 @@ class Data:
             else:
                 self.output_message("Database is up-to-date.")
 
+
+
+
     # noinspection PyProtectedMember
     def custom_get_new_data(self, limit: int = 500, progress_callback=None, locked=None, remove_first: bool = False,
                             caller=-1) -> List[dict]:
@@ -383,6 +392,7 @@ class Data:
         callback(100, "Downloaded all new data successfully.")
         self.download_loop = False
         self.download_completed = True
+        self.atr = get_atr(100, self.data)
         return self.data
 
     def get_new_data(self, timestamp: int, limit: int = 1000, get_current: bool = False) -> list:
@@ -393,8 +403,11 @@ class Data:
         :param get_current: Boolean for whether to include current period's data.
         :return: A list of dictionaries.
         """
-        new_data = self.binanceClient.get_historical_klines(self.symbol, self.interval, timestamp + 1, limit=limit)
+        new_data = self.binanceClient.get_historical_klines(self.symbol, self.interval, timestamp
+                                                            +1   #not incrementing timestamp by 1 each time
+                                                            , limit=limit)
         self.download_completed = True
+        print("updated through get new data")
         if len(new_data[:-1]) == 0:
             raise RuntimeError("No data was fetched from Binance. Please check Binance server.")
 
@@ -418,7 +431,7 @@ class Data:
         Checks whether data is fully updated or not.
         :return: A boolean whether data is updated or not with Binance values.
         """
-        latest_date = self.data[-1]['date_utc']
+        latest_date =  self.data[-1]['date_utc']
         return self.is_latest_date(latest_date)
 
     @staticmethod
@@ -461,6 +474,7 @@ class Data:
                 new_data = self.get_new_data(timestamp)
 
             self.insert_data(new_data)
+            print('inserted new data through update_data')
 
             if verbose:
                 self.output_message("Data has been updated successfully.\n")
@@ -486,6 +500,7 @@ class Data:
             self.remove_past_data_if_needed()
             if not self.data_is_updated():
                 self.update_data()
+                print('Update the data')
 
             current_interval = self.data[-1]['date_utc'] + timedelta(minutes=self.interval_minutes)
             current_timestamp = int(current_interval.timestamp() * 1000)
@@ -498,6 +513,8 @@ class Data:
                                                                               endTime=next_timestamp,
                                                                               )[0][1:]  # We don't need timestamp.
             self.current_values = get_normalized_data(data=current_data)
+            print("Updated through get current data function")
+            print(self.current_values)
 
             if counter > 0:
                 self.try_callback("Successfully reconnected.")

@@ -63,6 +63,7 @@ class Strategy:
 
         return 0
 
+
     def set_inputs(self, *args, **kwargs):
         """
         This function is used extensively by the optimizer. Your inputs argument will reset the strategy's inputs.

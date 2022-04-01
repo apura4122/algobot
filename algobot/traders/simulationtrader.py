@@ -15,6 +15,7 @@ from algobot.traders.trader import Trader
 from algobot.algorithms import convert_renko, get_atr
 
 
+
 class SimulationTrader(Trader):
     """
     Simulation trader class.
@@ -54,13 +55,9 @@ class SimulationTrader(Trader):
         self.dailyChangeNets = []  # Daily change net list. Will contain list of all nets.
         print(self.dataView)
         print("--------------------------------")
-        df = pd.DataFrame(self.dataView.data)
-        print(df)
-        df['date'] = df['date_utc']
-        self.renko = convert_renko(df, get_atr(100, self.dataView.data))
-        self.final_data = self.renko.to_dict('records')
-        self.og = self.dataView
-        self.og.data = self.final_data
+
+
+
 
     def output_message(self, message: str, level: int = 2, printMessage: bool = False):
         """
@@ -356,7 +353,7 @@ class SimulationTrader(Trader):
         :return: Integer in the form of an enum.
         """
         if not dataObject:  # We usually only pass the dataObject for a lower interval.
-            dataObject = self.og
+            dataObject = self.dataView
 
         trends = [strategy.get_trend(data=dataObject, log_data=log_data) for strategy in self.strategies.values()]
         return self.get_cumulative_trend(trends=trends)
@@ -449,6 +446,10 @@ class SimulationTrader(Trader):
         If there is a trend and the previous position did not reflect the trend, the bot enters position.
         :param log_data: Boolean that will determine where data is logged or not.
         """
+
+
+
+
         self.trend = trend = self.get_trend(log_data=log_data)
         if self.currentPosition == SHORT:
             self.short_position_logic(trend)

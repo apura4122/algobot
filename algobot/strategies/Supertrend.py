@@ -10,9 +10,13 @@ import pstats
 from algobot.enums import BEARISH, BULLISH
 # from algobot.Superoption import Option
 from algobot.traders.backtester import Backtester
+from algobot.helpers import get_random_color
 from algobot.algorithms import get_ema, get_sma, get_wma, supertrend, convert_renko, get_atr
 
+
 from algobot.strategies.strategy import Strategy
+
+
 from PyQt5.QtWidgets import (QApplication, QCompleter, QFileDialog,
                              QMainWindow, QMessageBox, QTableWidgetItem)
 
@@ -41,9 +45,17 @@ class Supertrend(Strategy):
         self.file_handler.setFormatter(self.formatter)
         self.file_handler.setLevel(logging.DEBUG)
         self.loggern.addHandler(self.file_handler)
+        self.x = 1
+        self.final_data = []
+        self.final_data_current = []
+        self.renko_current = {}
+        self.renko = {}
 
         ma1 = f'{self.Buy_multiplier}{self.Sell_multiplier}({self.ATR_buy_period})({self.ATR_sell_period})  - {self.Parameter}'
         self.plotDict['Current Price'] = [self.get_current_trader_price(), '00ff00']
+        self.plotDict['Close Price'] = [67767,'0000ff']
+        self.plotDict['Supertrend'] = [45545,'000000']
+
         self.strategyDict['general'] = {
             'Buy Multiplier': self.Buy_multiplier,
             'Sell Multiplier': self.Sell_multiplier,
@@ -133,7 +145,21 @@ class Supertrend(Strategy):
             # Get a copy of the data + the current values. Note we create a copy because we don't want to mutate the
             # actual Data object. We limit data objects to hold 1000 items at a time, so this is not a very expensive
             # operation.
-            data = data.data + [data.current_values]
+
+            data = data.data
+                   # + [data.current_values]
+            df = pd.DataFrame(data)
+            print(len(df))
+            df = df.tail(100)
+            df = df.reset_index()
+            df['date'] = df['date_utc']
+            self.renko = convert_renko(df, data_obj.atr)
+            self.final_data = self.renko.to_dict('records')
+            self.plotDict['Close Price'] = [self.final_data[- 1]['close'], get_random_color()]
+            self.plotDict['Current Price'] = [self.get_current_trader_price(), '00ff00']
+            print('------------------------')
+            print(self.final_data[- 1]['close'])
+            print(data[-1]['close'])
 
 
 
@@ -158,7 +184,7 @@ class Supertrend(Strategy):
             # atr = get_atr(self.ATR_period, data)
             # dated = convert_renko(table, atr)
             # print(data)
-            avg1 = parent.get_super( self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period, data)
+            avg1 = parent.get_super( self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period, self.final_data)
 
         prefix, interval = self.get_prefix_and_interval_type(data_obj)
 
@@ -178,6 +204,7 @@ class Supertrend(Strategy):
         self.plotDict['Supertrend'] = [
             supertrend(data, self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period),
             'FF0000']
+
 
         if interval == 'regular' and not isinstance(data_obj, list):  # Only plot for regular interval values.
             # Note that the value of this dictionary is a list. The first contains the value and the second contains
