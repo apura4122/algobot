@@ -149,17 +149,17 @@ class Supertrend(Strategy):
             data = data.data
                    # + [data.current_values]
             df = pd.DataFrame(data)
-            print(len(df))
-            df = df.tail(100)
+            
+            df = df.tail(400)
             df = df.reset_index()
+
             df['date'] = df['date_utc']
             self.renko = convert_renko(df, data_obj.atr)
             self.final_data = self.renko.to_dict('records')
+            print(self.final_data)
             self.plotDict['Close Price'] = [self.final_data[- 1]['close'], get_random_color()]
             self.plotDict['Current Price'] = [self.get_current_trader_price(), '00ff00']
-            print('------------------------')
-            print(self.final_data[- 1]['close'])
-            print(data[-1]['close'])
+
 
 
 
@@ -167,13 +167,10 @@ class Supertrend(Strategy):
 
             #convert list to pandas dataframe and then back to list
             # atr = get_atr(self.ATR_period, data)
-
-
-            print(self.parent)
             avg1 = supertrend(data, self.Buy_multiplier,self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
         else:  # This means it was called by the live bot / simulation.
 
-            print('aaaaaaaaaaaaaaa')
+
             avg1 = supertrend(self.final_data, self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
 
         prefix, interval = self.get_prefix_and_interval_type(data_obj)
