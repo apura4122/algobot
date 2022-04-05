@@ -83,7 +83,7 @@ class Data:
         self.database_table = f'data_{self.interval}'
         self.database_file = self.get_database_file()
         self.create_table()
-        self.atr = 90
+        self.atr = 150
 
         if load_data:
             # Create, initialize, store, and get values from database.
@@ -392,7 +392,7 @@ class Data:
         callback(100, "Downloaded all new data successfully.")
         self.download_loop = False
         self.download_completed = True
-        self.atr = get_atr(100, self.data)
+        # self.atr = get_atr(100, self.data)
         return self.data
 
     def get_new_data(self, timestamp: int, limit: int = 1000, get_current: bool = False) -> list:

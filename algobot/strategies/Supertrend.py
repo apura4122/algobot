@@ -41,10 +41,10 @@ class Supertrend(Strategy):
         self.loggern.setLevel(logging.INFO)
         self.formatter = logging.Formatter('%(asctime)s %(levelname)s::%(message)s')
         self.ts = time.time()
-        self.file_handler = logging.FileHandler('D:\Work\Programming\info' + str(self.ts) + '.log')
-        self.file_handler.setFormatter(self.formatter)
-        self.file_handler.setLevel(logging.DEBUG)
-        self.loggern.addHandler(self.file_handler)
+        # self.file_handler = logging.FileHandler('D:\Work\Programming\info' + str(self.ts) + '.log')
+        # self.file_handler.setFormatter(self.formatter)
+        # self.file_handler.setLevel(logging.DEBUG)
+        # self.loggern.addHandler(self.file_handler)
         self.x = 1
         self.final_data = []
         self.final_data_current = []
@@ -163,28 +163,18 @@ class Supertrend(Strategy):
 
 
 
-        if type(data) == list:  # This means it was called by the optimizer/backtester.
+        if type(data_obj) == list:  # This means it was called by the optimizer/backtester.
 
             #convert list to pandas dataframe and then back to list
             # atr = get_atr(self.ATR_period, data)
 
-            # print('--------------------------------------------------------------------------------------')
-            # df = pd.DataFrame(data)
-            # # print(df)
-            # df['date'] = df['date_utc']
-            #
-            # dated = convert_renko(df,atr)
-            # print(data)
-            # print('--------------------------------------------------------------------------------------')
-            # print(dated)
-            # dated = dated.to_dict('records')
+
+            print(self.parent)
             avg1 = supertrend(data, self.Buy_multiplier,self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
         else:  # This means it was called by the live bot / simulation.
-            # table = data.create_table()
-            # atr = get_atr(self.ATR_period, data)
-            # dated = convert_renko(table, atr)
-            # print(data)
-            avg1 = parent.get_super( self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period, self.final_data)
+
+            print('aaaaaaaaaaaaaaa')
+            avg1 = supertrend(self.final_data, self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
 
         prefix, interval = self.get_prefix_and_interval_type(data_obj)
 
