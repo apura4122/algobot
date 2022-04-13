@@ -160,6 +160,7 @@ class RealTrader(SimulationTrader):
                     asset['quoteAsset']['asset'] == 'USDT'][0]['quoteAsset']
         else:
             assets = self.binanceClient.get_margin_account()['userAssets']
+            print(assets)
             coin = [asset for asset in assets if asset['asset'] == self.coinName][0]
             usdt = [asset for asset in assets if asset['asset'] == 'USDT'][0]
 
@@ -251,6 +252,10 @@ class RealTrader(SimulationTrader):
         :return: initial starting balance for bot
         """
         self.currentPrice = self.dataView.get_current_price()
+        print(self.currentPrice)
+        print(self.coin)
+        print(self.coinOwed)
+        print(self.balance)
         usdt = self.coin * self.currentPrice + self.balance
         usdt -= self.coinOwed * self.currentPrice
         return usdt
