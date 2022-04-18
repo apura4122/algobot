@@ -168,6 +168,15 @@ class Supertrend(Strategy):
 
                 self.final_data = self.renko.to_dict('records')
 
+                if len(self.final_data) < 60:
+                    dfe = df.tail(5000)
+                    dfe = dfe.reset_index()
+
+                    dfe['date'] = dfe['date_utc']
+                    self.renko = convert_renko(dfe, data_obj.atr)
+
+                    self.final_data = self.renko.to_dict('records')
+
 
 
 
