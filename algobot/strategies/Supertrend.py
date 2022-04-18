@@ -149,14 +149,28 @@ class Supertrend(Strategy):
             data = data.data
                    # + [data.current_values]
             df = pd.DataFrame(data)
+            print(len(df))
 
-            df = df.tail(2000)
-            df = df.reset_index()
+            dfe = df.tail(1000)
+            dfe = dfe.reset_index()
 
-            df['date'] = df['date_utc']
-            self.renko = convert_renko(df, data_obj.atr)
+            dfe['date'] = dfe['date_utc']
+            self.renko = convert_renko(dfe, data_obj.atr)
 
             self.final_data = self.renko.to_dict('records')
+
+            if len(self.final_data < 60):
+                dfe = df.tail(3000)
+                dfe = dfe.reset_index()
+
+                dfe['date'] = dfe['date_utc']
+                self.renko = convert_renko(dfe, data_obj.atr)
+
+                self.final_data = self.renko.to_dict('records')
+
+
+
+
 
             self.plotDict['Close Price'] = [self.final_data[- 1]['close'], get_random_color()]
             self.plotDict['Current Price'] = [self.get_current_trader_price(), '00ff00']
