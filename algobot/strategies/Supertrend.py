@@ -158,8 +158,9 @@ class Supertrend(Strategy):
             self.renko = convert_renko(dfe, data_obj.atr)
 
             self.final_data = self.renko.to_dict('records')
+            print(self.final_data[0])
 
-            if len(self.final_data) < 60:
+            if len(self.final_data)/6 < 60:
                 dfe = df.tail(3000)
                 dfe = dfe.reset_index()
 
@@ -168,7 +169,8 @@ class Supertrend(Strategy):
 
                 self.final_data = self.renko.to_dict('records')
 
-                if len(self.final_data) < 60:
+
+                if len(self.final_data)/6 < 60:
                     dfe = df.tail(5000)
                     dfe = dfe.reset_index()
 

@@ -508,7 +508,7 @@ def supertrend(data: List[Dict[str, float]], buy_mult: float, sell_mult: float, 
 
     if data[-1]['close'] >= sup:
 
-        return (1.0, sup, data[-1]['close'])
+        return (1.0, sup, data[-1]['close']) # Bullish
 
     else:
         return (2.0, sup, data[-1]['close'])
