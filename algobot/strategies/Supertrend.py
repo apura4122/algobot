@@ -153,12 +153,15 @@ class Supertrend(Strategy):
 
             dfe = df.tail(1000)
             dfe = dfe.reset_index()
+            print(len(dfe))
+            print(data_obj.atr)
 
             dfe['date'] = dfe['date_utc']
             self.renko = convert_renko(dfe, data_obj.atr)
 
             self.final_data = self.renko.to_dict('records')
             print(self.final_data[0])
+            print(len(self.final_data))
 
             if len(self.final_data)/6 < 60:
                 dfe = df.tail(3000)

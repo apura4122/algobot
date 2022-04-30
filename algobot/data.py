@@ -83,7 +83,7 @@ class Data:
         self.database_table = f'data_{self.interval}'
         self.database_file = self.get_database_file()
         self.create_table()
-        self.atr = 150
+        self.atr = 0.00000023
 
         if load_data:
             # Create, initialize, store, and get values from database.
@@ -331,7 +331,7 @@ class Data:
         output_data = []  # Initialize our list.
         timeframe = binance.client.interval_to_milliseconds(self.interval)
         start_ts = total_beginning_timestamp = self.get_latest_timestamp()
-        end_progress = time.time() * 1000 - total_beginning_timestamp
+        end_progress = time.time() * 2000 - total_beginning_timestamp
         idx = 0
 
         def callback(percentage, msg):
