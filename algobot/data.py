@@ -83,7 +83,7 @@ class Data:
         self.database_table = f'data_{self.interval}'
         self.database_file = self.get_database_file()
         self.create_table()
-        self.atr = 0.00000023
+        self.atr = 0.0005
 
         if load_data:
             # Create, initialize, store, and get values from database.

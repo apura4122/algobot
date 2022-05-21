@@ -16,8 +16,8 @@ class Trader:
     """
     def __init__(self, symbol, precision, startingBalance, marginEnabled: bool = True):
         # Initialize initial values.
-        self.startingBalance = startingBalance  # Balance we started bot with.
-        self.balance = startingBalance  # USDT Balance.
+        self.startingBalance = startingBalance # Balance we started bot with.
+        self.balance = startingBalance # USDT Balance.
         self.previousNet = startingBalance  # Our previous net will just be the starting balance in the beginning.
         self.coin = 0  # Amount of coin we own.
         self.coinOwed = 0  # Amount of coin we owe.
