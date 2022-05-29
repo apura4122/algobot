@@ -58,7 +58,7 @@ class Data:
         self.interval_minutes = self.get_interval_minutes()
 
         self.precision = precision  # Decimal precision with which to show data.
-        self.data_limit = 2000  # Max amount of data to contain.
+        self.data_limit = 3000  # Max amount of data to contain.
         self.download_completed = False  # Boolean to determine whether data download is completed or not.
         self.download_loop = True  # Boolean to determine whether data is being downloaded or not.
         self.tickers = self.binanceClient.get_all_tickers()  # A list of all the tickers on Binance.
@@ -407,6 +407,8 @@ class Data:
                                                             +1   #not incrementing timestamp by 1 each time
                                                             , limit=limit)
         self.download_completed = True
+
+        #ERROR
         print("updated through get new data")
         if len(new_data[:-1]) == 0:
             raise RuntimeError("No data was fetched from Binance. Please check Binance server.")
@@ -460,7 +462,7 @@ class Data:
         Updates run-time data with Binance API values.
         """
         latest_date = self.data[-1]['date_utc']
-        timestamp = int(latest_date.timestamp()) * 1500
+        timestamp = int(latest_date.timestamp()) * 1000
         date_with_interval_added = latest_date + timedelta(minutes=self.interval_minutes)
 
         if verbose:
