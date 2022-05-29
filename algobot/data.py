@@ -460,7 +460,7 @@ class Data:
         Updates run-time data with Binance API values.
         """
         latest_date = self.data[-1]['date_utc']
-        timestamp = int(latest_date.timestamp()) * 1000
+        timestamp = int(latest_date.timestamp()) * 1500
         date_with_interval_added = latest_date + timedelta(minutes=self.interval_minutes)
 
         if verbose:

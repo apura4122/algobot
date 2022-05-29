@@ -857,6 +857,7 @@ class Backtester(Trader):
             elif trend == BULLISH:
                 self.buy_short('Exited short because a bullish trend was detected.')
                 self.buy_long('Entered long because a bullish trend was detected.')
+
             elif trend == EXIT_SHORT:
                 self.buy_short('Bought short because an exit-short trend was detected.')
         elif self.currentPosition == LONG:
