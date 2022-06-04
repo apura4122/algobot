@@ -494,7 +494,7 @@ class SimulationTrader(Trader):
         Returns target coin name.
         Function assumes trader is using a coin paired with USDT.
         """
-        temp = self.dataView.symbol.upper().split('USDT')
+        temp = self.dataView.symbol.upper().split('BUSD')
         return temp[0]
 
     def output_no_position_information(self):

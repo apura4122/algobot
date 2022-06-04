@@ -157,12 +157,12 @@ class RealTrader(SimulationTrader):
             assets = self.get_isolated_margin_account()['assets']
             coin = [asset for asset in assets if asset['baseAsset']['asset'] == self.coinName][0]['baseAsset']
             usdt = [asset for asset in assets if asset['baseAsset']['asset'] == self.coinName and
-                    asset['quoteAsset']['asset'] == 'USDT'][0]['quoteAsset']
+                    asset['quoteAsset']['asset'] == 'BUSD'][0]['quoteAsset']
         else:
             assets = self.binanceClient.get_margin_account()['userAssets']
             print(assets)
             coin = [asset for asset in assets if asset['asset'] == self.coinName][0]
-            usdt = [asset for asset in assets if asset['asset'] == 'USDT'][0]
+            usdt = [asset for asset in assets if asset['asset'] == 'BUSD'][0]
 
         self.balance = self.round_down(float(usdt['free']))
         self.coin = self.round_down(float(coin['free']))
@@ -228,12 +228,13 @@ class RealTrader(SimulationTrader):
         """
         Returns spot USDT amount.
         """
-        return self.round_down(self.binanceClient.get_asset_balance(asset='USDT')['free'])
+        return self.round_down(self.binanceClient.get_asset_balance(asset='BUSD')['free'])
 
     def get_spot_coin(self) -> float:
         """
         Returns spot coin amount.
         """
+        print(self.coinName)
         return self.round_down(self.binanceClient.get_asset_balance(asset=self.coinName)['free'])
 
     # noinspection PyProtectedMember
@@ -288,10 +289,10 @@ class RealTrader(SimulationTrader):
         if self.isolated:
             assets = self.get_isolated_margin_account()['assets']
             for asset in assets:
-                if asset['baseAsset']['asset'] == self.coinName and asset['quoteAsset']['asset'] == 'USDT':
+                if asset['baseAsset']['asset'] == self.coinName and asset['quoteAsset']['asset'] == 'BUSD':
                     return self.round_down(float(asset['quoteAsset']['free']))
         else:
-            return self.round_down(float(self.get_asset('USDT')['free']))
+            return self.round_down(float(self.get_asset('BUSD')['free']))
 
     def get_margin_coin(self) -> float:
         """
