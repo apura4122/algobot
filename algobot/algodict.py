@@ -102,6 +102,7 @@ def get_interface_dictionary(parent, caller: int = None):
                 'endBotButton': parent.endBacktestButton,
                 # Graphs
                 'graph': parent.backtestGraph,
+                'averageGraph': parent.simulationAvgGraph,
                 # Table
                 'historyTable': parent.backtestTable,
             },

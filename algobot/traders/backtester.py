@@ -22,16 +22,17 @@ from numpy import min
 from numpy import around
 import pandas as pd
 from dateutil import parser
-
+from algobot.algodict import get_interface_dictionary
 from algobot.enums import (BACKTEST, BEARISH, BULLISH, ENTER_LONG, ENTER_SHORT, EXIT_LONG, EXIT_SHORT, LONG, OPTIMIZER,
                            SHORT)
 from algobot.helpers import (LOG_FOLDER, ROOT_DIR, convert_all_dates_to_datetime, convert_small_interval,
-                             get_interval_minutes, get_ups_and_downs, parse_strategy_name)
+                             get_interval_minutes, get_ups_and_downs, parse_strategy_name, final_down, final_up, sup)
 from algobot.interface.config_utils.strategy_utils import get_strategies_dictionary
 from algobot.strategies.strategy import Strategy
 from algobot.traders.trader import Trader
 from algobot.typing_hints import DATA_TYPE, DICT_TYPE
 from algobot.algorithms import convert_renko, get_atr
+from algobot.graph_helpers import update_main_average_graphs, add_data_to_plot
 
 
 class Backtester(Trader):
@@ -87,6 +88,7 @@ class Backtester(Trader):
         df = pd.DataFrame(self.data)
         # print(df)
         df['date'] = df['date_utc']
+
         self.renko = convert_renko(df, get_atr(100, self.data))
         self.final_data = self.renko.to_dict('records')
         self.pop_size = 200
@@ -95,6 +97,7 @@ class Backtester(Trader):
         self.F = 1
         self.bounds = 0
         self.k = 1
+        self.std = 0
 
     def change_strategy_interval(self, interval: str):
         """
@@ -261,6 +264,8 @@ class Backtester(Trader):
         Main function to start a backtest.
         :param thread: Thread to pass to other functions to emit signals to.
         """
+
+
         test_length = self.endDateIndex - self.startDateIndex
         divisor = max(test_length // 100, 1)
 
@@ -272,6 +277,7 @@ class Backtester(Trader):
             result = self.simulate_hold(test_length, divisor, thread)
         else:
             result = self.strategy_backtest(test_length, divisor, thread)
+
         self.endingTime = time.time()
         return result
 
@@ -284,6 +290,12 @@ class Backtester(Trader):
 
         self.currentPeriod = self.data[index]
         self.currentPrice = self.currentPeriod['close']
+        global final_up
+        global final_down
+        global sup
+        final_up = 0
+        final_down = 0
+        sup = 0
 
         if self.currentPosition == SHORT:
             self.buy_short("Exited short position because backtest ended.")
@@ -346,6 +358,13 @@ class Backtester(Trader):
             seen_data.append(self.currentPeriod)
 
             self.main_logic()
+            # if thread.caller == BACKTEST:
+            #     graphDict = self.interfaceDictionary[BACKTEST]['mainInterface']['graph']
+            #     add_data_to_plot(self, graphDict, 0, y= self.get_net(), timestamp=self.currentPeriod)
+            #     graphDictavg = self.interfaceDictionary[BACKTEST]['mainInterface']['averageGraph']
+            #     update_main_average_graphs(self,graphDictavg, BACKTEST, self.currentPeriod, self.currentPrice)
+            #     print("loop_2")
+
             if self.get_net() < 10:
                 if thread and thread.caller == BACKTEST:
                     thread.signals.message.emit("Backtester ran out of money. Change your strategy or date interval.")
@@ -372,7 +391,8 @@ class Backtester(Trader):
                 gapData = self.get_gap_data(seen_data[-self.intervalGapMultiplier - 1: -1])
                 strategy_data.append(gapData)
 
-            if thread and thread.caller == BACKTEST and index % divisor == 0:
+            if thread and thread.caller == BACKTEST:
+                    # and index % divisor == 0:
                 thread.signals.activity.emit(thread.get_activity_dictionary(self.currentPeriod, index, testLength))
 
         self.exit_backtest(index)
@@ -663,7 +683,8 @@ class Backtester(Trader):
         """
         row = (
             round(self.get_net() / self.startingBalance * 100 - 100, 2),
-            self.get_stop_loss_strategy_string(),
+
+            round((self.get_net() / self.startingBalance * 100 - 100)/np.std([sub['net'] for sub in self.trades]),2),
             self.get_safe_rounded_string(self.lossPercentageDecimal, multiplier=100, symbol='%'),
             str(self.takeProfitType),
             self.get_safe_rounded_string(self.takeProfitPercentageDecimal, multiplier=100, symbol='%'),
@@ -682,7 +703,7 @@ class Backtester(Trader):
         """
         Exports optimizer rows to file path provided using Pandas.
         """
-        headers = ['Profit Percentage', 'Stop Loss Strategy', 'Stop Loss Percentage', 'Take Profit Strategy',
+        headers = ['Profit Percentage', 'Sharpe Ratio', 'Stop Loss Percentage', 'Take Profit Strategy',
                    'Take Profit Percentage', 'Ticker', 'Interval', 'Strategy Interval', 'Trades', 'Run',
                    'Result', 'Strategy']
         df = pd.DataFrame(self.optimizerRows)

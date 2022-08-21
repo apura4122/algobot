@@ -84,6 +84,8 @@ class BacktestThread(QRunnable):
         """
         backtester = self.gui.backtester
         net = backtester.get_net()
+        plot = backtester.strategies['supertrend'].get_plot_data()
+
         profit = net - backtester.startingBalance
         if profit < 0:
             profitPercentage = round(100 - net / backtester.startingBalance * 100, 2)
@@ -101,7 +103,10 @@ class BacktestThread(QRunnable):
             'profitPercentage': f'{profitPercentage}%',
             'currentPeriod': period['date_utc'].strftime("%m/%d/%Y, %H:%M:%S"),
             'utc': period['date_utc'].timestamp(),
-            'percentage': int((index - backtester.startDateIndex) / length * 100)
+            'percentage': int((index - backtester.startDateIndex) / length * 100),
+            'supertrend': plot['Supertrend'][0],
+            'Close' : plot['Close Price'][0]
+
         }
 
         backtester.pastActivity.append(activity)

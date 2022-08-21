@@ -268,9 +268,7 @@ def setup_average_graph_plots(gui: Interface, graph: PlotWidget, trader, colors:
 
             append_plot_to_graph(gui, graph, [plot_dict])
             index += 1
-            print(index)
-            print([plot_dict])
-            print(name)
+
 
 
 def append_plot_to_graph(gui: Interface, targetGraph: PlotWidget, toAdd: list):
@@ -342,6 +340,8 @@ def setup_graphs(gui: Interface):
             graph.setTitle("Simulation Net")
         elif graph == gui.liveGraph:
             graph.setTitle("Live Net")
+        # elif graph == gui.backtestAvgGraph:
+        #     graph.setTitle("Backtest Indicators")
         elif graph == gui.simulationAvgGraph:
             graph.setTitle("Simulation Indicators")
         elif graph == gui.avgGraph:
@@ -391,7 +391,7 @@ def update_main_graphs(gui: Interface, caller: int, valueDict: dict):
         trader = gui.get_trader(caller=caller)
         for strategy in trader.strategies.values():
             strategy_plot_dict = strategy.get_plot_data()
-            print(strategy_plot_dict)
+
             index =0
             for name, combined_data in strategy_plot_dict.items():
 
@@ -407,4 +407,66 @@ def update_main_graphs(gui: Interface, caller: int, valueDict: dict):
                     timestamp=current_utc
                 )
                 index += 1
+        smart_update(average_graph_dict)
+
+
+def update_main_average_graphs(gui: Interface, targetGraph: PlotWidget, caller: int, utc: float, price: float, superb: float, close: float):
+    """
+    Updates graphs and moving averages from statistics based on caller.
+    :param gui: GUI in which to update main graphs.
+    :param valueDict: Dictionary with required values.
+    :param caller: Caller that decides which graphs get updated.
+    """
+    precision = gui.get_trader(caller=caller).precision
+
+
+    average_graph = targetGraph
+
+    average_graph_dict = get_graph_dictionary(gui, average_graph)
+    graph_x_size = len(average_graph_dict['plots'][0]['x']) + GRAPH_LEEWAY
+    if average_graph_dict['enable']:
+        average_graph.setLimits(xMin=0, xMax=graph_x_size)
+        # add_data_to_plot(gui, average_graph, 0, y=round(valueDict['price'], precision), timestamp=current_utc)
+
+        trader = gui.get_trader(caller=caller)
+        for strategy in trader.strategies.values():
+            strategy_plot_dict = strategy.get_plot_data()
+
+            index =0
+            for name, combined_data in strategy_plot_dict.items():
+
+                if name == 'index':
+                    continue
+
+                value, _ = combined_data
+
+                if name == 'Current Price':
+                    add_data_to_plot(
+                        gui=gui,
+                        targetGraph=average_graph,
+                        plotIndex=index,
+                        y=round( price, 2),
+                        timestamp=utc
+                    )
+                    index += 1
+                elif name == 'Close Price':
+                    add_data_to_plot(
+                        gui=gui,
+                        targetGraph=average_graph,
+                        plotIndex=index,
+                        y=round( close, 2),
+                        timestamp=utc
+                    )
+                    index += 1
+                elif name == 'Supertrend':
+                    add_data_to_plot(
+                        gui=gui,
+                        targetGraph=average_graph,
+                        plotIndex=index,
+                        y=round( superb, 2),
+                        timestamp=utc
+                    )
+                    index += 1
+
+
         smart_update(average_graph_dict)

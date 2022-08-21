@@ -20,7 +20,7 @@ from algobot.data import Data
 from algobot.enums import BACKTEST, LIVE, LONG, OPTIMIZER, SHORT, SIMULATION, GraphType
 from algobot.graph_helpers import (add_data_to_plot, destroy_graph_plots, get_graph_dictionary,
                                    set_backtest_graph_limits_and_empty_plots, setup_graph_plots, setup_graphs,
-                                   update_backtest_graph_limits, update_main_graphs)
+                                   update_backtest_graph_limits, update_main_graphs, update_main_average_graphs)
 from algobot.helpers import ROOT_DIR, create_folder, create_folder_if_needed, get_caller_string, open_file_or_folder
 from algobot.interface.about import About
 from algobot.interface.config_utils.slot_utils import load_hide_show_strategies
@@ -68,6 +68,7 @@ class Interface(QMainWindow):
             {'graph': self.backtestGraph, 'plots': [], 'label': self.backtestCoordinates, 'enable': True},
             {'graph': self.liveGraph, 'plots': [], 'label': self.liveCoordinates, 'enable': True},
             {'graph': self.avgGraph, 'plots': [], 'label': self.liveAvgCoordinates, 'enable': True},
+            # {'graph': self.backtestAvgGraph, 'plots': [], 'label': self.backtestAvgCoordinates, 'enable': True},
             {'graph': self.simulationAvgGraph, 'plots': [], 'label': self.simulationAvgCoordinates, 'enable': True},
         )
         setup_graphs(gui=self)  # Setting up graphs.
@@ -436,6 +437,10 @@ class Interface(QMainWindow):
         net = updatedDict['net']
         utc = updatedDict['utc']
 
+        price = float(updatedDict['price'][1:])
+        superb = updatedDict['supertrend']
+        close = updatedDict['Close']
+
         if net < self.backtester.startingBalance:
             self.backtestProfitLabel.setText("Loss")
             self.backtestProfitPercentageLabel.setText("Loss Percentage")
@@ -455,6 +460,10 @@ class Interface(QMainWindow):
         if add_data:
             graphDict = self.interfaceDictionary[BACKTEST]['mainInterface']['graph']
             add_data_to_plot(self, graphDict, 0, y=net, timestamp=utc)
+            graphDictavg = self.interfaceDictionary[BACKTEST]['mainInterface']['averageGraph']
+            update_main_average_graphs(self,graphDictavg, BACKTEST, utc, price, superb,close)
+
+
 
     def update_backtest_configuration_gui(self, statDict: dict):
         """
@@ -508,8 +517,12 @@ class Interface(QMainWindow):
         interfaceDict = self.interfaceDictionary[BACKTEST]['mainInterface']
         symbol = configurationDictionary['symbol']
         interval = configurationDictionary['interval']
+        averageGraphDict = get_graph_dictionary(self, interfaceDict['averageGraph'])
         destroy_graph_plots(self, interfaceDict['graph'])
+        destroy_graph_plots(self, interfaceDict['averageGraph'])
         setup_graph_plots(self, interfaceDict['graph'], self.backtester, GraphType.NET)
+        averageGraphDict['enable'] = True
+        setup_graph_plots(self, interfaceDict['averageGraph'], self.backtester, GraphType.AVG)
         set_backtest_graph_limits_and_empty_plots(self)
         self.update_backtest_configuration_gui(configurationDictionary)
         self.add_to_backtest_monitor(f"Started backtest with {symbol} data and {interval.lower()} interval periods.")

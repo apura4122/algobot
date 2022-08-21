@@ -15,6 +15,9 @@ from algobot.helpers import get_data_from_parameter
 from algobot.helpers import get_data_from_parameter, final_up, final_down, sup
 
 
+
+
+
 def get_ddof_from_stdev(stdev_type: str) -> int:
     """
     Get the DDOF from standard deviation (used for numpy).
@@ -446,6 +449,7 @@ def get_atr(periods: int, data: List[Dict[str, float]]) -> float:
         high_close = np.abs(data[-x - 1]['high'] - data[-x - 2]['close'])
         low_close = np.abs(data[-x - 1]['low'] - data[-x - 1]['close'])
         running_sum += max(high_low, high_close, low_close)
+    print('ATR:',(running_sum / periods))
 
     return (running_sum / periods)
 

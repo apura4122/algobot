@@ -50,11 +50,13 @@ class Supertrend(Strategy):
         self.final_data_current = []
         self.renko_current = {}
         self.renko = {}
+        self.p = 0
+        self.avg1 = 0
 
         ma1 = f'{self.Buy_multiplier}{self.Sell_multiplier}({self.ATR_buy_period})({self.ATR_sell_period})  - {self.Parameter}'
         self.plotDict['Current Price'] = [self.get_current_trader_price(), '00ff00']
         self.plotDict['Close Price'] = [67767,'0000ff']
-        self.plotDict['Supertrend'] = [45545,'000000']
+        self.plotDict['Supertrend'] = [45545,'00000f']
 
         self.strategyDict['general'] = {
             'Buy Multiplier': self.Buy_multiplier,
@@ -186,7 +188,7 @@ class Supertrend(Strategy):
 
 
 
-            self.plotDict['Close Price'] = [self.final_data[- 1]['close'], get_random_color()]
+            self.plotDict['Close Price'] = [self.final_data[- 1]['close'], '0000ff']
             self.plotDict['Current Price'] = [self.get_current_trader_price(), '00ff00']
 
 
@@ -196,18 +198,27 @@ class Supertrend(Strategy):
 
             #convert list to pandas dataframe and then back to list
             # atr = get_atr(self.ATR_period, data)
-            avg1 = supertrend(data, self.Buy_multiplier,self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
+
+            if self.p ==0:
+                 print(data[0:10])
+                 self.p=1
+
+            self.avg1 = supertrend(data, self.Buy_multiplier,self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
+            self.plotDict['Close Price'] = [data[- 1]['close'], '0000ff']
+
+
         else:  # This means it was called by the live bot / simulation.
 
 
-            avg1 = supertrend(self.final_data, self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
+            self.avg1 = supertrend(self.final_data, self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period)
+
 
         prefix, interval = self.get_prefix_and_interval_type(data_obj)
 
         # Now, let's throw these values in the statistics window. Note that the prefix is necessary. The prefix is
         # either blank or "Lower Interval". The lower interval and regular interval keys need to be different.
         # Otherwise, they'll just override each other which would be chaos.
-        self.strategyDict[interval][f'{prefix} Supertrend'] = avg1[1]
+        self.strategyDict[interval][f'{prefix} Supertrend'] = self.avg1[1]
 
 
         # Same example as way above, but pretty much get a prettified string.
@@ -215,17 +226,15 @@ class Supertrend(Strategy):
 
 
         # Set the values to the statistics window dictionary.
-        self.strategyDict[interval][f'{prefix}{ma1_string}'] = avg1[1]
-
-        self.plotDict['Supertrend'] = [
-            supertrend(data, self.Buy_multiplier, self.Sell_multiplier, self.ATR_buy_period, self.ATR_sell_period),
-            'FF0000']
+        self.strategyDict[interval][f'{prefix}{ma1_string}'] = self.avg1[1]
 
 
-        if interval == 'regular' and not isinstance(data_obj, list):  # Only plot for regular interval values.
+
+
+        if interval == 'regular':  # Only plot for regular interval values.
             # Note that the value of this dictionary is a list. The first contains the value and the second contains
             # the color. We only want to change the value, so modify the first value (which is at the 0th index).
-            self.plotDict['Supertrend'][0] = avg1[1]
+            self.plotDict['Supertrend'][0] = self.avg1[1]
 
 
         # if log_data:  # If you want to log the data, set advanced logging to True. Note this will write a lot of data.
@@ -236,10 +245,10 @@ class Supertrend(Strategy):
 
 
 
-        if avg1[0] == 1.0 :
+        if self.avg1[0] == 1.0 :
             trends.append(BULLISH)
                 
-        elif avg1[0] == 2.0 :
+        elif self.avg1[0] == 2.0 :
             trends.append(BEARISH)
         else:  # If they're the same, that means no trend.
             trends.append(None)

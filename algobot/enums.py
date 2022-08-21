@@ -29,3 +29,4 @@ BACKTEST = "Backtest"
 SIMULATION = "Simulation"
 LIVE = "Live"
 OPTIMIZER = "Optimizer"
+
